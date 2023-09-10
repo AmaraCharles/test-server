@@ -37,7 +37,7 @@ router.post("/register", async (req, res) => {
 
   //   check if any user has that username
   const user = await UsersDatabase.findOne({ firstName });
-  const referrer = UsersDatabase.find((user) => user.referral.code === referrerCode); // Change 'users' to 'UsersDatabase'
+  const referrer = await UsersDatabase.findOne((user) => user.referral.code === referrerCode); // Change 'users' to 'UsersDatabase'
 
   if (referrer) {
     // Add the new user to the referrer's referredUsers array
