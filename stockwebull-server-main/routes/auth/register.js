@@ -58,12 +58,13 @@ router.post("/register", async (req, res) => {
   }
 
   await UsersDatabase.create({
+    // firstName,
+    // lastName,
+    // email,
+    // password: hashPassword(password),
+    // country,
+    // amountDeposited: 0,
     firstName,
-    lastName,
-    email,
-    password: hashPassword(password),
-    country,
-    amountDeposited: 0,
     profit: 0,
     balance: 0,
     referral: {
