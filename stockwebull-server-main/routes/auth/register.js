@@ -5,6 +5,19 @@ var router = express.Router();
 const { v4: uuidv4 } = require("uuid");
 
 
+function generateReferralCode(length) {
+  const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  let code = "";
+
+  for (let i = 0; i < length; i++) {
+    const randomIndex = Math.floor(Math.random() * characters.length);
+    code += characters.charAt(randomIndex);
+  }
+
+  return code;
+}
+
+
 router.post("/register", async (req, res) => {
   const { firstName, lastName, email, password, country, referralCode } = req.body;
 
