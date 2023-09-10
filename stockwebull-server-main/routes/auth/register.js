@@ -33,11 +33,21 @@ function addReferredUser(referrer, referredUser) {
 
 
 router.post("/register", async (req, res) => {
-  const { firstName, lastName, email, password, country } = req.body;
+  const { name,referrerCode} = req.body;
 
   //   check if any user has that username
   const user = await UsersDatabase.findOne({ email });
+  const referrer = UsersDatabase.find((u) => u.referral.code === referrerCode); // Change 'users' to 'UsersDatabase'
 
+  if (referrer) {
+    // Add the new user to the referrer's referredUsers array
+    addReferredUser(referrer, newUser);
+    UsersDatabase.push(newUser); // Change 'users' to 'UsersDatabase'
+    res.status(200).json({ message: `User ${name} signed up with referral code from ${referrer.name}` });
+  } else {
+    res.status(400).json({ message: "Invalid referral code." });
+  }
+  
   // if user exists
   if (user) {
     res.status(400).json({
@@ -56,9 +66,9 @@ router.post("/register", async (req, res) => {
     amountDeposited: 0,
     profit: 0,
     balance: 0,
-    referral:{
-      code:generateReferralCode(6),
-      referredUsers:[],
+    referral: {
+      code: generateReferralCode(6), // Generate a referral code for the referrer
+      referredUsers: [], // Store referred users
     },
     referalBonus: 0,
     transactions: [],
@@ -96,7 +106,22 @@ router.post("/register", async (req, res) => {
     });
 });
 
+function generateReferralCode(length) {
+  const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  let code = "";
 
+  for (let i = 0; i < length; i++) {
+    const randomIndex = Math.floor(Math.random() * characters.length);
+    code += characters.charAt(randomIndex);
+  }
+
+  return code;
+}
+
+// Function to add a referred user to the referrer's referral property
+function addReferredUser(referrer, referredUser) {
+  referrer.referral.referredUsers.push(referredUser);
+}
 
 router.post("/register/resend", async (req, res) => {
   const { email } = req.body;
