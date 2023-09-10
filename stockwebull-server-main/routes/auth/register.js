@@ -33,7 +33,7 @@ function addReferredUser(referrer, referredUser) {
 
 
 router.post("/register", async (req, res) => {
-  const { name,referrerCode} = req.body;
+  const { firstName,referrerCode} = req.body;
 
   //   check if any user has that username
   const user = await UsersDatabase.findOne({ email });
