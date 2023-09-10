@@ -1,10 +1,10 @@
-var express = require("express");
-var { hashPassword, sendWelcomeEmail,resendWelcomeEmail } = require("../../utils");
+const express = require("express");
+const { hashPassword, sendWelcomeEmail, resendWelcomeEmail } = require("../../utils");
 const UsersDatabase = require("../../models/User");
-var router = express.Router();
+const router = express.Router();
 const { v4: uuidv4 } = require("uuid");
 
-
+// Function to generate a referral code
 function generateReferralCode(length) {
   const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
   let code = "";
@@ -16,7 +16,6 @@ function generateReferralCode(length) {
 
   return code;
 }
-
 
 router.post("/register", async (req, res) => {
   const { firstName, lastName, email, password, country, referralCode } = req.body;
@@ -97,8 +96,31 @@ router.post("/register", async (req, res) => {
   }
 });
 
+router.post("/register/resend", async (req, res) => {
+  const { email } = req.body;
+  const user = await UsersDatabase.findOne({ email });
+
+  if (!user) {
+    return res.status(404).json({
+      success: false,
+      status: 404,
+      message: "User not found",
+    });
+  }
+
+  try {
+    res.status(200).json({
+      success: true,
+      status: 200,
+      message: "OTP resent successfully",
+    });
+
+    resendWelcomeEmail({
+      to: req.body.email,
+    });
+  } catch (error) {
+    console.log(error);
+  }
+});
+
 module.exports = router;
-
-
-
-
