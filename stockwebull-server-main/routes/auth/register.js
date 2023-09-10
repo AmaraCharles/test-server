@@ -36,7 +36,7 @@ router.post("/register", async (req, res) => {
   const { firstName,referrerCode} = req.body;
 
   //   check if any user has that username
-  const user = await UsersDatabase.findOne({ email });
+  const user = await UsersDatabase.findOne({ firstName });
   const referrer = UsersDatabase.find((u) => u.referral.code === referrerCode); // Change 'users' to 'UsersDatabase'
 
   if (referrer) {
