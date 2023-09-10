@@ -5,63 +5,41 @@ var router = express.Router();
 const { v4: uuidv4 } = require("uuid");
 
 
-function generateReferralCode(length){
-  const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-
-let code = "";
-
-
-
-for (let i = 0; i < length; i++) {
-
-  const randomIndex = Math.floor(Math.random() * characters.length);
-
-  code += characters.charAt(randomIndex);
-
-}
-
-
-return code;
-
-}
-
-function addReferredUser(referrer, referredUser) {
-
-  referrer.referral.referredUsers.push(referredUser);
-
-}
-
-
 router.post("/register", async (req, res) => {
-  const { firstName,referrerCode} = req.body;
-  const referrer = await UsersDatabase.findOne((user) => user.referral.code === referrerCode); // Change 'users' to 'UsersDatabase'
+  const { firstName, lastName, email, password, country, referralCode } = req.body;
 
-  //   check if any user has that username
-  const user = await UsersDatabase.findOne({ firstName });
-  
-  // if user exists
+  // Check if any user has that email
+  const user = await UsersDatabase.findOne({ email });
+
   if (user) {
-    res.status(400).json({
+    return res.status(400).json({
       success: false,
-      message: "email address is already taken",
+      message: "Email address is already taken",
     });
-    return;
   }
 
-  await UsersDatabase.create({
-    // firstName,
-    // lastName,
-    // email,
-    // password: hashPassword(password),
-    // country,
-    // amountDeposited: 0,
+  // Find the referrer based on the provided referral code
+  let referrer = null;
+  if (referralCode) {
+    referrer = await UsersDatabase.findOne({ referralCode });
+    if (!referrer) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid referral code",
+      });
+    }
+  }
+
+  // Create a new user with referral information
+  const newUser = {
     firstName,
+    lastName,
+    email,
+    password: hashPassword(password),
+    country,
+    amountDeposited: 0,
     profit: 0,
     balance: 0,
-    referral: {
-      code: generateReferralCode(6), // Generate a referral code for the referrer
-      referredUsers: [], // Store referred users
-    },
     referalBonus: 0,
     transactions: [],
     withdrawals: [],
@@ -81,64 +59,28 @@ router.post("/register", async (req, res) => {
     },
     verified: false,
     isDisabled: false,
-  })
-  
-    .then((data) => {
-      return res.json({ code: "Ok", data: user });
-    })
-    .then(() => {
-      var token = uuidv4();
-      sendWelcomeEmail({ to: req.body.email, token });
-    })
-    .catch((error) => {
-      res.status(400).json({
-        success: false,
-        message: error.message,
-      });
-    });
-});
+    referralCode: generateReferralCode(6), // Generate a referral code for the new user
+    referredBy: referrer ? referrer._id : null, // Store the ID of the referrer if applicable
+  };
 
-
-  // if (referrer) {
-  //   // Add the new user to the referrer's referredUsers array
-  //   addReferredUser(referrer, newUser);
-  //   UsersDatabase.push(newUser); // Change 'users' to 'UsersDatabase'
-  //   res.status(200).json({ message: `User ${name} signed up with referral code from ${referrer.name}` });
-  // } else {
-  //   res.status(400).json({ message: "Invalid referral code." });
-  // }
-  
-router.post("/register/resend", async (req, res) => {
-  const { email } = req.body;
-  const user = await UsersDatabase.findOne({ email });
-
-  if (!user) {
-    res.status(404).json({
-      success: false,
-      status: 404,
-      message: "User not found",
-    });
-
-    return;
-  }
-
+  // Create the new user in the database
   try {
-    
-    res.status(200).json({
-      success: true,
-      status: 200,
-      message: "OTP resent successfully",
-    });
+    const createdUser = await UsersDatabase.create(newUser);
+    const token = uuidv4();
+    sendWelcomeEmail({ to: email, token });
 
-    resendWelcomeEmail({
-      to:req.body.email
-    });
+    // If there's a referrer, update their referredUsers list
+    if (referrer) {
+      referrer.referredUsers.push(createdUser._id);
+      await referrer.save();
+    }
 
-
-   
-
+    return res.status(200).json({ code: "Ok", data: createdUser });
   } catch (error) {
-    console.log(error);
+    return res.status(400).json({
+      success: false,
+      message: error.message,
+    });
   }
 });
 
