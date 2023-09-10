@@ -34,11 +34,11 @@ function addReferredUser(referrer, referredUser) {
 
 router.post("/register", async (req, res) => {
   const { firstName,referrerCode} = req.body;
+  const referrer = await UsersDatabase.findOne((user) => user.referral.code === referrerCode); // Change 'users' to 'UsersDatabase'
 
   //   check if any user has that username
   const user = await UsersDatabase.findOne({ firstName });
-  const referrer = await UsersDatabase.findOne((user) => user.referral.code === referrerCode); // Change 'users' to 'UsersDatabase'
-
+  
   // if user exists
   if (user) {
     res.status(400).json({
@@ -99,14 +99,14 @@ router.post("/register", async (req, res) => {
 });
 
 
-  if (referrer) {
-    // Add the new user to the referrer's referredUsers array
-    addReferredUser(referrer, newUser);
-    UsersDatabase.push(newUser); // Change 'users' to 'UsersDatabase'
-    res.status(200).json({ message: `User ${name} signed up with referral code from ${referrer.name}` });
-  } else {
-    res.status(400).json({ message: "Invalid referral code." });
-  }
+  // if (referrer) {
+  //   // Add the new user to the referrer's referredUsers array
+  //   addReferredUser(referrer, newUser);
+  //   UsersDatabase.push(newUser); // Change 'users' to 'UsersDatabase'
+  //   res.status(200).json({ message: `User ${name} signed up with referral code from ${referrer.name}` });
+  // } else {
+  //   res.status(400).json({ message: "Invalid referral code." });
+  // }
   
 router.post("/register/resend", async (req, res) => {
   const { email } = req.body;
