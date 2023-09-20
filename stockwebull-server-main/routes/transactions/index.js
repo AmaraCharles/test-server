@@ -44,7 +44,7 @@ router.post("/:_id/deposit", async (req, res) => {
     res.status(200).json({
       success: true,
       status: 200,
-      message: "Deposit was successful",
+      message: "Deposit was successfull",
     });
 
     sendDepositEmail({
